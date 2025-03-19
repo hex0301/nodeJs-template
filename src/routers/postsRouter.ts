@@ -9,7 +9,7 @@ router.get('/all-posts', postsController.getPosts);
 router.get('/single-post', postsController.singlePost);
 router.post('/create-post', identifier, postsController.createPost);
 
-router.put('/update-post', identifier, postsController.updatePost);
-router.delete('/delete-post', identifier, postsController.deletePost);
+router.post('/update-post', identifier, postsController.updatePost);
+router.post('/delete-post', identifier, postsController.deletePost);
 
 export default router;

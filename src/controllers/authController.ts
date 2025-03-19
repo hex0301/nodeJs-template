@@ -11,16 +11,22 @@ import {
 import jwt from "jsonwebtoken"
 import { Request, Response } from "express";
 import { errorSignupHandling } from "../handler/errorHandling";
-
+import dotenv from 'dotenv';
+import { crossOriginEmbedderPolicy } from "helmet";
+dotenv.config();
 
 const tokenSecret = process.env.TOKEN_SECRET || "";
 const hmacVerofocationCodeSecret = process.env.HMAC_VERIFICATION_CODE_SECRET || "";
 
 
-
+export const getUser =  async (req: Request , res : Response) =>{
+	const user  = await User.find().select("+password")
+	res.status(200).json({success : true , message : "User list" , data: user })
+}
 
 export const signup = async (req : Request , res : Response) => {
-	const { email, password } = req.body;
+	const { email, password } = (Object.keys(req.query).length === 0 ? req.body : req.query)
+	const postsPerPage = 10;
 	try {
 		const { error, value } = signupSchema.validate({ email, password });
 
@@ -58,7 +64,8 @@ export const signup = async (req : Request , res : Response) => {
 };
 
 export const signin = async (req : Request , res : Response) => {
-	const { email, password } = req.body;
+	const { email, password } = (Object.keys(req.query).length === 0 ? req.body : req.query)
+	const postsPerPage = 10;
 	try {
 		const { error, value } = signinSchema.validate({ email, password });
 		if (error) {
@@ -90,13 +97,13 @@ export const signin = async (req : Request , res : Response) => {
 			},
 			tokenSecret,
 			{
-				expiresIn: '8h',
+				expiresIn: '1h',
 			}
 		);
 
 		res
 			.cookie('Authorization', 'Bearer ' + token, {
-				expires: new Date(Date.now() + 8 * 3600000),
+				expires: new Date(Date.now() + 1 * 5000),
 				httpOnly: process.env.NODE_ENV === 'production',
 				secure: process.env.NODE_ENV === 'production',
 			})
@@ -141,7 +148,9 @@ export const sendVerificationCode = async (req : Request , res : Response) => {
 			subject: 'verification code',
 			html: '<h1>' + codeValue + '</h1>',
 		});
-
+		if(process.env.NODE_ENV ===  "dev"){
+			console.log(`Verification Code : ${ codeValue }`)
+		}
 		if (info.accepted[0] === existingUser.email) {
 			const hashedCodeValue = hmacProcess(
 				codeValue,
@@ -229,9 +238,8 @@ export const verifyVerificationCode = async (req : Request , res : Response) => 
 	}
 };
 
-export const changePassword = async (req : any , res : Response) => {
-	const { userId, verified } = req.user;
-	const { oldPassword, newPassword } = req.body;
+export const changePassword = async (req : Request , res : Response) => {
+	const { oldPassword, newPassword,email , verified } = req.body;
 	try {
 		const { error, value } = changePasswordSchema.validate({
 			oldPassword,
@@ -249,7 +257,7 @@ export const changePassword = async (req : any , res : Response) => {
 				.json({ success: false, message: 'You are not verified user!' });
                 return
 		}
-		const existingUser = await User.findOne({ _id: userId }).select(
+		const existingUser = await User.findOne({ email }).select(
 			'+password'
 		);
 		if (!existingUser) {
@@ -304,6 +312,9 @@ export const sendForgotPasswordCode = async (req : Request , res : Response) => 
 			existingUser.forgotPasswordCode = hashedCodeValue;
 			existingUser.forgotPasswordCodeValidation = Date.now();
 			await existingUser.save();
+			if(process.env.NODE_ENV === "dev"){
+				console.log(`Verification Code : ${codeValue}`)
+			}
 			res.status(200).json({ success: true, message: 'Code sent!' });
             return
 		}

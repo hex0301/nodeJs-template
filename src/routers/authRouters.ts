@@ -8,6 +8,10 @@ router.post('/signup', authController.signup);
 router.post('/signin', authController.signin);
 router.post('/signout', identifier, authController.signout);
 
+
+//get all users 
+router.get('/users',authController.getUser)
+
 router.patch(
 	'/send-verification-code',
 	identifier,

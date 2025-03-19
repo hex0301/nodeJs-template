@@ -6,7 +6,7 @@ export const doHash = (value: string, saltValue: string | number) => {
 	return result;
 };
 
-export const doHashValidation = (value: string, hashedValue: string) => {
+export const doHashValidation = async (value: string, hashedValue: string) => {
 	const result = compare(value, hashedValue);
 	return result;
 };

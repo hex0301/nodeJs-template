@@ -4,7 +4,7 @@ import { Request,Response } from 'express';
 
 
 export const getPosts = async (req : Request , res : Response) => {
-	const { page } =  req.query;
+	const { page } = (Object.keys(req.query).length === 0 ? req.body : req.query)
 	const postsPerPage = 10;
 	try {
 		let pageNum = 0;
@@ -27,11 +27,12 @@ export const getPosts = async (req : Request , res : Response) => {
 	}
 };
 
+
 export const singlePost = async (req : Request , res : Response) => {
-	const { _id } = req.query;
+	const { _id } = (Object.keys(req.query).length === 0 ? req.body : req.query)
 
 	try {
-		const existingPost = await Post.findOne({ _id }).populate({
+		const existingPost = await Post.findOne({_id}).populate({
 			path: 'userId',
 			select: 'email',
 		});
@@ -49,9 +50,9 @@ export const singlePost = async (req : Request , res : Response) => {
 	}
 };
 
-export const createPost = async (req : any , res : Response) => {
-	const { title, description } = req.body;
-	const { userId } = req.user;
+export const createPost = async (req : Request , res : Response) => {
+	const { title, description } = (Object.keys(req.query).length === 0 ? req.body : req.query)
+	const { userId } = req.body.jwtVerified;
 	try {
 		const { error, value } = createPostSchema.validate({
 			title,
@@ -76,10 +77,10 @@ export const createPost = async (req : any , res : Response) => {
 	}
 };
 
-export const updatePost = async (req : any , res : Response) => {
-	const { _id } = req.query;
+export const updatePost = async (req : Request , res : Response) => {
+	const { _id } = (Object.keys(req.query).length === 0 ? req.body : req.query)
 	const { title, description } = req.body;
-	const { userId } = req.user;
+	const { userId } = req.body.jwtVerified;
 	try {
 		const { error, value } = createPostSchema.validate({
 			title,
@@ -113,10 +114,10 @@ export const updatePost = async (req : any , res : Response) => {
 	}
 };
 
-export const deletePost = async (req : any , res : Response) => {
-	const { _id } = req.query;
-
-	const { userId } = req.user;
+export const deletePost = async (req : Request , res : Response) => {
+	const { _id } =  (Object.keys(req.query).length === 0 ? req.body : req.query)
+	const { userId } = req.body.jwtVerified;
+	console.log({_id})
 	try {
 		const existingPost = await Post.findOne({ _id });
 		if (!existingPost) {
